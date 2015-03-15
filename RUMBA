@@ -1,0 +1,63 @@
+Rumba(v.0.00001) – protokół udostępniania plików w sieci lokalnej 
+
+Protokół zakłada komunikację równolegle za pomocą UDP i TCP. Za pomocą UDP realizowana jest kontrola obecności klienta, natomiast TCP jest wykorzystywany do komunikacji bezpośredniej pomiędzy dwoma użytkownikami. 
+
+A. UDP
+Protokół zakłada użycie trzech komend podczas komunikacji. 
+RUMBA – komunikat sygnalizujący obecność. Każdy klient powinien wysyłać ją do określonych klientów w odstępach czasowych 30-300s oraz czyścić informację o obecności. Na komendę tę klient otrzymuje od pozostałych połączonych komunikat DANCE. Zalecane użycie adresów broadcast lub multicast.
+DANCE – komunikat, który każdy klient powinien odesłać do nadawcy wiadomości RUMBA. Sygnalizuje obecność. 
+BYE – komunikat wysyłany do wszystkich połączonych symbolizujący zakończenie obecności. Wszyscy którzy go otrzymają powinni usunąć nadawcę ze swojej listy obecności klientów
+B. TCP
+Program używa protokołu TCP w dwóch celach – przekazywania swoich zasobów innym (jako serwer) oraz wysyłanie żądania pobrania zasobu (klient)
+a) TCP serwer
+OK – potwierdzenie możliwości realizacji żądania. Wysyłana po każdej prawidłowo zinterpretowanym żądaniu klienta. 
+BYE – komunikat symbolizujący zakończenie połączenia. Nie jest wywoływany w sytuacji a) otrzymania od klienta komunikatu BYE b) zakończenia żądań GET oraz GETLIST. Serwer powinien w każdym momencie. w którym może otrzymać od klienta komendę mieć możliwość zinterpretowania komendy BYE, która doprowadzi do zamknięcia gniazda. 
+ERROR – dowolny nieoczekiwany ciąg znaków nie będący jedną z powyższych komend
+b) TCP klient
+To co serwer oraz:
+GETLIST – pobranie listy plików udostępnianych przez serwer. 
+GET – pobranie pliku udostępnionego przez serwer.
+
+WSZYSTKIE POLECENIA SĄ KOŃCZONE ZNAKIEM NOWEJ LINII
+
+D. Komunikacja GETLIST
+Klient wysyła żądanie GETLIST
+  Serwer odpowiada OK
+    Serwer wysyła listę plików
+      Serwer kończy transmisję, klient wysyła komendę BYE
+	Koniec połączenia
+  Serwer odpowiada BYE (1)
+    Koniec połączenia
+  Serwer odpowiada ERROR
+    Serwer i Klient wysyłają BYE (2)
+      Koniec połączenia
+
+
+E. Komunikacja GET
+
+Klient wysyła żądanie GET
+  Serwer odpowiada OK
+    Klient wysyła identyfikator pliku
+      Serwer odpowiada OK
+	Serwer wysyła nazwę pliku
+	  Klient odpowiada OK
+	    Serwer wysyła plik
+	      Koniec połączenia
+	  Klient odpowiada BYE (1)
+	    Koniec połączenia
+	  Klient odpowiada ERROR
+	    Serwer i Klient wysyłają BYE (2)
+	      Koniec połączenia
+      Serwer odpowiada BYE (1)
+	Koniec połączenia
+      Serwer odpowiada ERROR
+	Serwer i Klient wysyłają BYE (2)
+	  Koniec połączenia
+  Serwer odpowiada BYE (1)
+    Koniec połączenia
+  Serwer odpowiada ERROR
+    Serwer i Klient wysyłają BYE (2)
+      Koniec połączenia
+
+(1) dopuszczalna jest implementacja jak w przypadku ERROR
+(2) oba komunikaty nie zostaną odczytane. Dopuszczalna jest implementacja z pominięciem tego kroku, jednak jest to zalecane
